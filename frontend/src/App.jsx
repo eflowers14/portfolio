@@ -10,6 +10,8 @@ import Projects from './components/Projects.jsx'
 import Contact from './components/Contact.jsx'
 import Footer from './components/Footer.jsx'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 export default function App() {
   // Estado de la aplicación:
   //   data    -> los datos que devuelve la API (o null si aún no hay)
@@ -23,7 +25,7 @@ export default function App() {
   useEffect(() => {
     // fetch es el navegador pidiendo una URL. En desarrollo, el proxy
     // de Vite reenvía '/api/' a Django (http://localhost:8000/api/).
-    fetch('/api/')
+    fetch(`${API_BASE_URL}/api/`)
       .then((response) => {
         // Si la respuesta no es correcta (ej: 404), lanzamos error
         if (!response.ok) {
@@ -46,7 +48,7 @@ export default function App() {
     return (
       <div className="loading">
         <div className="spinner" aria-hidden="true" />
-        <p>Cargando portfolio...</p>
+        <p>Cargando portfolio ...</p>
       </div>
     )
   }
