@@ -1,0 +1,16 @@
+# --- Python / Django ---
+venv/
+*.pyc
+__pycache__/
+db.sqlite3
+staticfiles/
+media/projects/
+
+# --- Node / Vite ---
+frontend/node_modules/
+frontend/dist/
+npm-debug.log*
+
+# --- Sistema ---
+.DS_Store
+Thumbs.db

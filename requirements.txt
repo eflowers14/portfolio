@@ -1,0 +1,4 @@
+# Dependencias de Python del proyecto
+# Instálalas con:  pip install -r requirements.txt
+Django>=5.0
+Pillow>=10.0
