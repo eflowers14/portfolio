@@ -21,21 +21,42 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+# En Render define la variable de entorno SECRET_KEY con un valor aleatorio.
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-ihqo%57miw*lt3c+-*j$3pp&zve92mp4&zlv=@w2-#a%-1$3ub'
 )
 
+# Detectamos si estamos desplegados en Render o Vercel (ellos definen
+# estas variables automáticamente). Sirve para activar el modo producción.
+IS_RENDER = os.environ.get('RENDER') == 'true'
+IS_VERCEL = os.environ.get('VERCEL') == '1'
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# DEBUG se apaga automáticamente en Render/Vercel. En local (runserver)
+# sigue en True para que puedas desarrollar sin problemas.
+DEBUG = (
+    os.environ.get('DEBUG', 'False' if (IS_RENDER or IS_VERCEL) else 'True')
+    == 'True'
+)
 
 # Hosts permitidos. En desarrollo basta con estos:
 #   localhost -> cuando abres http://localhost:8000
 #   127.0.0.1 -> la misma dirección pero con la IP
+# Puedes sobrescribirlos con la variable de entorno ALLOWED_HOSTS.
 ALLOWED_HOSTS = os.environ.get(
     'ALLOWED_HOSTS',
     'localhost,127.0.0.1'
 ).split(',')
+
+# En producción añadimos automáticamente los dominios de Render y Vercel,
+# así no tienes que configurar nada en el panel.
+if not DEBUG:
+    ALLOWED_HOSTS += ['.onrender.com', '.vercel.app', '.vercel.com']
+
+    # Render y Cloudflare terminan las peticiones HTTPS en un proxy.
+    # Esto hace que request.build_absolute_uri() genere URLs con https://
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -133,7 +154,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # En producción, Django debe servir también los archivos del build de React
 # (JS, CSS, imágenes...). Apuntamos a la carpeta 'dist' completa: así
@@ -148,7 +169,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Archivos subidos por el usuario (las imágenes de los proyectos).
 # MEDIA_URL es la URL pública (http://localhost:8000/media/...)
 # MEDIA_ROOT es la carpeta física donde se guardan.
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Tipo de clave primaria automática para los modelos nuevos.
@@ -165,9 +186,11 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 
-# Permite los orígenes de deploys de Vercel que cambian de subdominio.
+# Permite los orígenes de Vercel: tanto el dominio de producción
+# (portfolio.vercel.app) como los de preview/deploy que cambian de
+# subdominio en cada push (portfolio-xxxxx.vercel.app).
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r'^https://portfolio-.*\.vercel\.app$',
+    r'^https://.*\.vercel\.app$',
 ]
 
 if DEBUG:
@@ -180,11 +203,5 @@ if DEBUG:
         r'^http://127\.0\.0\.1:5173$',
     ]
 
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# Email (por ahora solo se muestra en consola; no se envían correos reales)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

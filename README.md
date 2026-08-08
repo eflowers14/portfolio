@@ -164,10 +164,10 @@ registros duplicados (usa `update_or_create`).
 
 ### Las imágenes de los proyectos
 
-El seed copia las imágenes desde las rutas que se indican al principio de
-`seed.py` (por defecto `D:\Code\ComidaClara.png`, etc.) a la carpeta
-`media/projects/`. Si tu carpeta es otra, edita `PROJECT_IMAGES` en ese
-archivo.
+Las imágenes viven en `media/projects/` y están **commiteadas en el repo**
+(no se ignoran), para que existan también en Render (cuyo disco es
+efímero). El seed solo enlaza la ruta en la base de datos. Para cambiar
+una imagen, reemplaza el archivo en `media/projects/` y haz commit.
 
 ---
 

@@ -6,9 +6,9 @@ Puede ejecutarse todas las veces que quieras: usa update_or_create,
 así que NO crea registros duplicados (si el registro ya existe,
 solo lo actualiza).
 """
-import shutil
 from pathlib import Path
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from core.models import Profile, Skill, Project, SocialLink
@@ -40,11 +40,15 @@ SKILLS_DATA = [
     {"category": "Herramientas", "items": ["Docker", "Vite", "Tailwind", "Supabase", "Git"]},
 ]
 
-# Rutas de las imágenes ORIGINALES en tu disco (las copiaremos a media/projects/)
+# Imágenes de los proyectos.
+# Viven COMMITEADAS en el repo en media/projects/ (por eso también
+# existen en Render, cuyo disco es efímero). El seed solo enlaza la
+# ruta en la base de datos. Para cambiar una imagen, reemplaza el
+# archivo en media/projects/ y haz commit.
 PROJECT_IMAGES = {
-    "Comida Clara": Path(r"D:\Code\ComidaClara.png"),
-    "Mayte Canvas": Path(r"D:\Code\MayteCanvas.png"),
-    "Remesas Express": Path(r"D:\Code\RemesasExpress.png"),
+    "Comida Clara": "projects/comida-clara.png",
+    "Mayte Canvas": "projects/mayte-canvas.png",
+    "Remesas Express": "projects/remesas-express.png",
 }
 
 # order -> menor número, aparece primero
@@ -134,8 +138,8 @@ class Command(BaseCommand):
                 )
         self.stdout.write(self.style.SUCCESS("  Habilidades listas"))
 
-        # 3) Proyectos + copiar imágenes
-        #    update_or_create por 'title' para no duplicar.
+        # 3) Proyectos: update_or_create por 'title' para no duplicar.
+        #    La imagen se enlaza desde media/projects/ (commiteada en el repo).
         for project_data in PROJECTS_DATA:
             project, created = Project.objects.update_or_create(
                 title=project_data["title"],
@@ -148,15 +152,10 @@ class Command(BaseCommand):
                 },
             )
 
-            # Copiamos la imagen a media/projects/<slug>.png
-            source = PROJECT_IMAGES[project_data["title"]]
-            if source.exists():
-                dest_dir = Path("media") / "projects"
-                dest_dir.mkdir(parents=True, exist_ok=True)
-                dest = dest_dir / f"{project.title.lower().replace(' ', '-')}.png"
-                shutil.copyfile(source, dest)
-                # Guardamos la ruta en el campo ImageField
-                project.image = f"projects/{dest.name}"
+            # Enlazamos la imagen si el archivo existe en el repo.
+            image_rel = PROJECT_IMAGES[project_data["title"]]
+            if (settings.MEDIA_ROOT / image_rel).exists():
+                project.image = image_rel
                 project.save()
 
         self.stdout.write(self.style.SUCCESS("  Proyectos listos"))

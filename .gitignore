@@ -4,7 +4,8 @@ venv/
 __pycache__/
 db.sqlite3
 staticfiles/
-media/projects/
+# media/projects/ NO se ignora: las imágenes del portfolio se commitean
+# para que existan también en Render (cuyo disco es efímero).
 
 # --- Node / Vite ---
 frontend/node_modules/
