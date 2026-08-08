@@ -28,6 +28,15 @@ urlpatterns = [
 # Django sirve las imágenes de los proyectos (MEDIA_ROOT) tanto en
 # desarrollo como en producción (Render): así /media/... funciona aunque
 # DEBUG esté en False. Las imágenes están commiteadas en el repo.
-from django.conf.urls.static import static
+# OJO: static() (django.conf.urls.static) NO añade la ruta cuando
+# DEBUG=False, por eso aquí definimos la ruta a mano con serve().
+from django.urls import re_path
+from django.views.static import serve
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += [
+    re_path(
+        r"^media/(?P<path>.*)$",
+        serve,
+        kwargs={"document_root": settings.MEDIA_ROOT},
+    ),
+]
