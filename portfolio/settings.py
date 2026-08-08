@@ -165,10 +165,19 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 
+# Permite los orígenes de deploys de Vercel que cambian de subdominio.
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://portfolio-.*\.vercel\.app$',
+]
+
 if DEBUG:
     CORS_ALLOWED_ORIGINS += [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
+    ]
+    CORS_ALLOWED_ORIGIN_REGEXES += [
+        r'^http://localhost:5173$',
+        r'^http://127\.0\.0\.1:5173$',
     ]
 
 # Email
