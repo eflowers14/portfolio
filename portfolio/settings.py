@@ -47,12 +47,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'core',  # Nuestra app con los modelos del portfolio
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -152,6 +154,22 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Tipo de clave primaria automática para los modelos nuevos.
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Configuración de CORS para permitir que el frontend desplegado acceda
+# a la API del backend en Render sin bloqueo por el navegador.
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        'CORS_ALLOWED_ORIGINS',
+        'https://portfolio-ten-rho-trfo331zuu.vercel.app',
+    ).split(',')
+    if origin.strip()
+]
+
+if DEBUG:
+    CORS_ALLOWED_ORIGINS += [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+    ]
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
