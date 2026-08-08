@@ -14,7 +14,7 @@ plateados y azules.
 4. [Poner en marcha en desarrollo](#poner-en-marcha-en-desarrollo)
 5. [Crear un superusuario (panel admin)](#crear-un-superusuario-panel-admin)
 6. [El comando seed (datos de ejemplo)](#el-comando-seed-datos-de-ejemplo)
-7. [Producción (servir React desde Django)](#producción-servir-react-desde-django)
+7. [Despliegue en producción (Vercel + Render)](#despliegue-en-producción-vercel--render)
 8. [Estructura de carpetas](#estructura-de-carpetas)
 9. [Cómo editar el contenido](#cómo-editar-el-contenido)
 10. [Errores comunes](#errores-comunes)
@@ -30,6 +30,7 @@ plateados y azules.
 | Frontend  | React + Vite    | La página web que ve el visitante                     |
 | Admin     | Django Admin    | Panel web para editar todo el contenido (`/admin/`)   |
 | Seed      | Comando Django  | Rellena la base de datos con tu contenido (`seed`)    |
+| Despliegue| Vercel + Render | Vercel sirve el frontend; Render sirve la API JSON    |
 
 ---
 
@@ -44,17 +45,18 @@ Navegador
    │              └── fetch('/api/')  → PROXY de Vite → Django :8000
    │
    └── En PRODUCCIÓN:
-           http://localhost:8000   ← Django sirve la página + la API
+           https://portfolio.vercel.app   ← Vercel sirve el build de React
                   │
-                  ├── /api/    → respuesta JSON
-                  └── /        → el build de React (frontend/dist)
+                  └── fetch('https://portfolio-7gmi.onrender.com/api/')
+                            → Django en Render (API JSON + fotos en /media/)
 ```
 
 - **En desarrollo** abres `http://localhost:5173`. Vite tiene un **proxy**
   configurado en `frontend/vite.config.js` que reenvía cualquier petición a
   `/api` hacia Django (`localhost:8000`). Por eso no necesitas CORS.
-- **En producción** Django sirve tanto la API (`/api/`) como el build de
-  React (`frontend/dist`) desde la raíz.
+- **En producción** el frontend lo sirve **Vercel** y el backend lo sirve
+  **Render** (solo la API en `/api/` y las fotos en `/media/`). Se comunican
+  por CORS, ya configurado en `portfolio/settings.py`.
 
 ---
 
@@ -171,22 +173,54 @@ una imagen, reemplaza el archivo en `media/projects/` y haz commit.
 
 ---
 
-## Producción (servir React desde Django)
+## Despliegue en producción (Vercel + Render)
 
-Para cuando quieras desplegar la página (no para desarrollo):
+El sitio se despliega en **dos servicios separados** (la rama desplegada es
+`elitebook`):
 
-```powershell
-cd frontend
-npm run build          # genera frontend/dist con la versión final
-cd ..
-.\venv\Scripts\python.exe manage.py collectstatic
-```
+| Servicio | Qué corre                      | URL                                   |
+| -------- | ------------------------------ | ------------------------------------- |
+| Vercel   | El frontend (build de React)   | `https://portfolio.vercel.app`        |
+| Render   | El backend (API JSON de Django)| `https://portfolio-7gmi.onrender.com` |
 
-Con esto, al arrancar Django (`runserver` o un servidor real), la raíz
-`http://localhost:8000/` ya mostrará la página completa servida por Django.
+### Frontend → Vercel
 
-> Recuerda: en producción cambia `DEBUG = False` y `ALLOWED_HOSTS` en
-> `portfolio/settings.py` antes de subirla a internet.
+- **Root Directory**: `frontend`
+- **Build Command**: `npm run build`
+- **Environment**: `VITE_API_URL=https://portfolio-7gmi.onrender.com`
+  (sin esta variable, el fetch a `/api/` sería relativo y no funcionaría).
+
+### Backend → Render
+
+- **Root Directory**: la raíz del repo (donde está `manage.py`).
+- **Start Command**: `bash render_start.sh`
+  (aplica migraciones, carga el `seed` y arranca gunicorn; se usa así porque
+  el disco de Render es efímero).
+- **Environment**:
+  - `SECRET_KEY`: un valor aleatorio (genera uno, p. ej. en https://djecrety.ir).
+  - `DEBUG` y `ALLOWED_HOSTS` se configuran solos: `settings.py` detecta
+    Render (`RENDER=true`) y apaga DEBUG y añade `.onrender.com` y
+    `.vercel.app` automáticamente.
+
+### CORS
+
+`portfolio/settings.py` permite cualquier origen `*.vercel.app` (producción
+y previews) mediante `CORS_ALLOWED_ORIGIN_REGEXES`, y el `VITE_API_URL` de
+Vercel apunta al dominio de Render. No hace falta tocarlo salvo que quieras
+restringir más los orígenes.
+
+### Las fotos y la base de datos
+
+- Las **fotos** de los proyectos están **commiteadas en `media/projects/`**,
+  así que existen también en Render (cuyo disco es efímero). Para cambiar
+  una, reemplaza el archivo y haz commit.
+- La **base de datos es SQLite y efímera**: en cada boot, `render_start.sh`
+  ejecuta `migrate` + `seed`, que **borra y recrea todo el contenido**. Por
+  eso los cambios que hagas desde el **admin se pierden al reiniciar** el
+  servicio. Para editar contenido, modifica `seed.py` y sube los cambios
+  (ver [Cómo editar el contenido](#cómo-editar-el-contenido)).
+- Si algún día quieres persistencia real (datos y admin que sobrevivan a los
+  reinicios), migra a **PostgreSQL** en Render.
 
 ---
 
@@ -195,19 +229,20 @@ Con esto, al arrancar Django (`runserver` o un servidor real), la raíz
 ```
 portfolio/
 ├── manage.py                  # Utilidad principal de Django (migrate, runserver...)
+├── render_start.sh            # Script de arranque para Render (migrate + seed + gunicorn)
 ├── requirements.txt           # Dependencias de Python
 ├── portfolio/
-│   ├── settings.py            # Configuración del proyecto
-│   ├── urls.py                # Rutas del proyecto (/api/, /admin/...)
+│   ├── settings.py            # Configuración (DEBUG/ALLOWED_HOSTS/CORS automáticos)
+│   ├── urls.py                # Rutas (/api/, /admin/...) + servir /media/ en producción
 │   └── ...
 ├── core/
 │   ├── models.py              # Las tablas: Profile, Skill, Project, SocialLink
 │   ├── views.py               # La API JSON (/api/) y la vista SPA
 │   ├── admin.py               # Registro de los modelos en el panel admin
 │   └── management/commands/seed.py   # Comando para cargar datos
-├── media/projects/            # Imágenes de los proyectos (las copia el seed)
+├── media/projects/            # Imágenes de los proyectos (commiteadas en el repo)
 └── frontend/
-    ├── vite.config.js         # Configuración de Vite (proxy de /api)
+    ├── vite.config.js         # Configuración de Vite (proxy de /api, base según VERCEL)
     ├── index.html             # Plantilla HTML de la SPA
     └── src/
         ├── App.jsx            # Componente principal (pide los datos a /api/)
@@ -245,12 +280,19 @@ falta reiniciar nada.
 
 - **`No module named django`** → el entorno virtual no está activado, o no
   ejecutaste `pip install -r requirements.txt`.
-- **`No puedo conectar con la API`** en el frontend → Django no está
-  corriendo (o no está en el puerto 8000). Revisa la Terminal 1.
+- **`No puedo conectar con la API`** en desarrollo → Django no está
+  corriendo (o no está en el puerto 8000). Revisa la Terminal 1. En
+  **producción**, revisa que `VITE_API_URL` está definido en Vercel y que
+  el CORS en `settings.py` permite el origen.
+- **`Access blocked by CORS` en el navegador** → el origen de Vercel no está
+  permitido. Revisa `CORS_ALLOWED_ORIGIN_REGEXES` en `settings.py` y que
+  Render tenga desplegado el último commit.
 - **La página sale en blanco** → prueba `npm run dev` en la carpeta
   `frontend` y asegúrate de que Vite dice "ready in".
-- **Las imágenes no aparecen** → ejecuta `manage.py seed` (las copia) y
-  comprueba que las rutas de `PROJECT_IMAGES` en `seed.py` existen.
+- **Las imágenes no aparecen en Render** → comprueba que el commit incluye
+  `media/projects/*.png` y que hiciste redeploy. Si `/media/...` da 404 con
+  `DEBUG=False`, verifica que `portfolio/urls.py` sirve media con
+  `django.views.static.serve` (el `static()` normal no sirve sin DEBUG).
 - **El admin en español sale raro** → normal, es la traducción automática
   de Django. `LANGUAGE_CODE = 'es'` está en `settings.py`.
 
