@@ -25,11 +25,9 @@ urlpatterns = [
     path("", views.spa, name="spa"),
 ]
 
-# En desarrollo, Django sirve las imágenes subidas (MEDIA_ROOT).
-# Esto es necesario para que se vean las imágenes de los proyectos
-# tanto en el admin como en la API.
-# (Los archivos static/ los sirve Django automáticamente con runserver)
-if settings.DEBUG:
-    from django.conf.urls.static import static
+# Django sirve las imágenes de los proyectos (MEDIA_ROOT) tanto en
+# desarrollo como en producción (Render): así /media/... funciona aunque
+# DEBUG esté en False. Las imágenes están commiteadas en el repo.
+from django.conf.urls.static import static
 
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
