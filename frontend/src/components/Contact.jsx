@@ -15,7 +15,7 @@ export default function Contact({ profile, socialLinks }) {
         </p>
 
         {/* Botón de email: mailto: abre el programa de correo */}
-        <a href={`mailto:${profile.email}`} className="btn btn--primary btn--big">
+        <a href={`mailto:${profile.email}`} className="overflow-hidden btn btn--primary btn--big email">
           <Icon name="email" />
           {profile.email}
         </a>
