@@ -148,15 +148,16 @@ button {
 
 /* ---------- Barra de navegación (fija) ---------- */
 .navbar {
-  position: fixed;               /* se queda pegada arriba al hacer scroll */
-  top: 0;
+  position: absolute;
   left: 0;
   right: 0;
   height: var(--nav-height);
   background: rgba(11, 15, 20, 0.92);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 100;
+  border-radius: 10px;
+  padding: 6px;
+  margin: 8px;
 }
 
 .nav-container {
@@ -598,23 +599,26 @@ button {
 
 /* ---------- Responsive (móvil y tablet) ---------- */
 @media (max-width: 860px) {
+  .navbar {
+    border-radius: 10px 10px 0 0;
+  }
   /* El menú pasa a modo columna desplegable */
   .nav-links {
     position: fixed;
-    top: var(--nav-height);
+    top: 68px;
     left: 0;
     right: 0;
     flex-direction: column;
-    background: var(--dark-soft);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding: 12px 24px 20px;
     gap: 2px;
     transform: translateY(-120%);
-    transition: transform 0.25s ease;
+    transition: all 0.4s ease-in-out;
   }
 
   .nav-links--open {
     transform: translateY(0);
+    background: rgba(11, 15, 20, 0.92);
+    transition: all 0.3s ease-in-out
   }
 
   .nav-links a {
