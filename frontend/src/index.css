@@ -89,6 +89,7 @@ button {
   font-size: 1rem;
   border: 2px solid transparent;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  overflow: hidden;
 }
 
 .btn svg {
@@ -403,7 +404,7 @@ button {
 /* ---------- Proyectos ---------- */
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(1fr));
   gap: 32px;
 }
 
@@ -647,5 +648,12 @@ button {
 
   .social-link {
     width: 72px;
+  }
+  .email {
+    font-size: 0;
+  }
+  .email::before {
+    content: 'Mail';
+    font-size: 1rem;
   }
 }
