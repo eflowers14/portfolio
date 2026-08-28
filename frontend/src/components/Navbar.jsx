@@ -19,7 +19,7 @@ export default function Navbar() {
       <nav className="nav-container">
         {/* Logo / marca: lleva al inicio */}
         <a href="#inicio" className="nav-logo" onClick={() => setOpen(false)}>
-          <span className="nav-logo-badge">EF</span>
+          <img className="nav-logo-badge" src="profileHide.jpg"></img>
           <span className="nav-logo-text">Enrique Flores</span>
         </a>
 
