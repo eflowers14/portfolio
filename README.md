@@ -45,7 +45,7 @@ Navegador
    │              └── fetch('/api/')  → PROXY de Vite → Django :8000
    │
    └── En PRODUCCIÓN:
-           https://portfolio.vercel.app   ← Vercel sirve el build de React
+           https://portfolio-flowers.vercel.app   ← Vercel sirve el build de React
                   │
                   └── fetch('https://portfolio-7gmi.onrender.com/api/')
                             → Django en Render (API JSON + fotos en /media/)
@@ -188,7 +188,22 @@ El sitio se despliega en **dos servicios separados** (la rama desplegada es
 - **Root Directory**: `frontend`
 - **Build Command**: `npm run build`
 - **Environment**: `VITE_API_URL=https://portfolio-7gmi.onrender.com`
-  (sin esta variable, el fetch a `/api/` sería relativo y no funcionaría).
+  (el build consulta `${VITE_API_URL}/api/` para generar el HTML estático;
+  debe ser accesible y devolver datos válidos antes de publicar).
+
+El build genera el portfolio dentro de `dist/index.html` y serializa de forma
+segura los datos usados para que React hidrate ese mismo HTML al cargar. Si la
+API no responde o devuelve datos incompletos, el build termina con error. En
+desarrollo, si no hay datos prerenderizados, la aplicación conserva la carga
+desde el navegador a través del proxy de Vite.
+
+Como el HTML queda generado en el build, los cambios hechos solo en Django/Render
+aparecerán en el portfolio después del siguiente build o redeploy de Vercel.
+
+Después de compilar, comprueba que `dist/index.html` contiene el contenido
+dentro de `#root` y que `dist/robots.txt` y `dist/sitemap.xml` existen. El
+contenido estático también debe seguir visible con JavaScript desactivado; al
+activar JavaScript, revisa la consola por errores de hidratación.
 
 ### Backend → Render
 
